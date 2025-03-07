@@ -6,6 +6,13 @@ This example leverages Daprs App Health Checks in order to provide a consistent 
 
 This example also leverages Dapr Jobs API to create 2 independent *job schedules*, that both signal the Workflow process when its time to run the Activities.
 
+### Why use the Jobs API for scheduling? Why not just use `context.CreateTimer()` included in the Workflow SDK?
+
+It's a great question. As it stands, the Workflow SDK does not have support for CRON like scheduling of timers, but Dapr Jobs API does!
+
+Also, given that this design is driven by an external Event (rather than a durable timer) this allows a 3rd party to manually invoke the workflow (...and run the Activities!) at any time, circumventing the schedule. Which is handy if you need that flexibility, particularly when testing.
+
+## Instructions
 **1. Run the example**
 
 `docker compose build`
