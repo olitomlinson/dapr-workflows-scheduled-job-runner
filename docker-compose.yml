@@ -1,0 +1,83 @@
+services:
+  scheduledjobrunner:
+    image: scheduledjobrunner
+    environment:
+      - DAPR_HTTP_PORT=3500
+      - REGISTER_WORKFLOWS=true
+      - REGISTER_ACTIVITIES=true
+    build:
+      context: .
+      dockerfile: ScheduledJobRunner/Dockerfile
+    ports:
+      - 3500:3500
+      - 5116:5116
+    networks:
+      - network
+  scheduledjobrunner-dapr:
+    image: "daprio/daprd:1.15.3"
+    command: ["./daprd",
+      "-app-id", "ScheduledJobRunner",
+      "-app-port", "5116",
+      "-placement-host-address", "placement:50005",
+      "-scheduler-host-address", "scheduler-0:50006",
+      "-resources-path", "/components",
+      "-log-level","info",
+      "-enable-app-health-check", "true",
+      "-app-health-check-path", "/health",
+      "-app-health-probe-interval", "10",
+      "-app-health-probe-timeout", "1000",
+      "-app-health-threshold", "1"
+      ]
+    volumes:
+      - "./components/:/components"
+    depends_on:
+      scheduler-0:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy
+    network_mode: "service:scheduledjobrunner"
+  # ############################
+  # # Dapr Scheduler service
+  # ############################
+  scheduler-0:
+    image: "daprio/dapr:1.15.3"
+    command: ["./scheduler", 
+      "--etcd-data-dir", "/var/run/dapr/scheduler"
+    ]
+    volumes: 
+      - ./dapr_scheduler/0:/var/run/dapr/scheduler
+    networks:
+      - network
+  ############################
+  # Dapr placement service
+  ############################
+  placement:
+    image: "daprio/dapr:1.15.3"
+    command: ["./placement", 
+      "-port", "50005",
+      "-log-level","warn"]
+    networks:
+      - network
+  postgres-db:
+    image: postgres:16.2-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=wO2VGDsMKR
+      - max_wal_size=2GB
+    healthcheck :
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
+      interval : 5s
+      timeout : 5s
+      retries : 5
+    ports:
+      -  5432:5432
+    networks:
+      - network
+    volumes: 
+      - postgres-db-16-2:/var/lib/postgresql/data
+networks:
+  network:
+volumes:
+  postgres-db-16-2:
+    driver: local
