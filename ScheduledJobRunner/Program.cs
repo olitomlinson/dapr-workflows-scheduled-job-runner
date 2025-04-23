@@ -39,8 +39,8 @@ app.MapPost("/job/ensure-workflow-is-running", async (DaprWorkflowClient workflo
 
     try
     {
-        var throttle = await workflowClient.GetWorkflowStateAsync(workflowId, false);
-        if (!throttle.Exists || !throttle.IsWorkflowRunning)
+        var instance = await workflowClient.GetWorkflowStateAsync(workflowId, false);
+        if (!instance.Exists || !instance.IsWorkflowRunning)
             createWorkflow = true;
     }
     catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Unknown)
