@@ -14,14 +14,14 @@ services:
     networks:
       - network
   scheduledjobrunner-dapr:
-    image: "daprio/daprd:1.15.3"
+    image: "daprio/daprd:${DAPR_RUNTIME_VERSION}"
     command: ["./daprd",
       "-app-id", "ScheduledJobRunner",
       "-app-port", "5116",
       "-placement-host-address", "placement:50005",
       "-scheduler-host-address", "scheduler-0:50006",
       "-resources-path", "/components",
-      "-log-level","info",
+      "-log-level","debug",
       "-enable-app-health-check", "true",
       "-app-health-check-path", "/health",
       "-app-health-probe-interval", "10",
@@ -40,7 +40,7 @@ services:
   # # Dapr Scheduler service
   # ############################
   scheduler-0:
-    image: "daprio/dapr:1.15.3"
+    image: "daprio/dapr:${DAPR_SCHEDULER_VERSION}"
     command: ["./scheduler", 
       "--etcd-data-dir", "/var/run/dapr/scheduler"
     ]
@@ -52,7 +52,7 @@ services:
   # Dapr placement service
   ############################
   placement:
-    image: "daprio/dapr:1.15.3"
+    image: "daprio/dapr:${DAPR_PLACEMENT_VERSION}"
     command: ["./placement", 
       "-port", "50005",
       "-log-level","warn"]

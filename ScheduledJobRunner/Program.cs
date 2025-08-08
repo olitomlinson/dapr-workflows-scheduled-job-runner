@@ -35,25 +35,11 @@ app.MapGet("/health", async (DaprJobsService jobsService) =>
 
 app.MapPost("/job/ensure-workflow-is-running", async (DaprWorkflowClient workflowClient) =>
 {
-    var createWorkflow = false;
-
-    try
-    {
-        var instance = await workflowClient.GetWorkflowStateAsync(workflowId, false);
-        if (!instance.Exists || !instance.IsWorkflowRunning)
-            createWorkflow = true;
-    }
-    catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Unknown)
-    {
-        // TODO : refactor this when the wfruntime handles 404 workflows properly
-        createWorkflow = true;
-    }
-
-    if (!createWorkflow)
+    var instance = await workflowClient.GetWorkflowStateAsync(workflowId, false);
+    if (instance.Exists && instance.IsWorkflowRunning)
         return;
 
-    app.Logger.LogWarning($"'{workflowId}' workflow does not exist, attempting to schedule it");
-
+    app.Logger.LogWarning($"'{workflowId}' workflow is not in a running state, attempting to schedule it");
     await workflowClient.ScheduleNewWorkflowAsync(nameof(MyWorkflow), workflowId, null);
 });
 
